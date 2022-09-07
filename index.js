@@ -55,6 +55,9 @@ function mainMenu() {
                 case '\u001b[36mView all departments\u001b[0m':
                     viewDepartments('*');
                     break;
+                case '\u001b[36mView all roles\u001b[0m':
+                    viewRoles('*');
+                    break;
 
                 case "\u001b[31mDelete a department\u001b[0m":
                     deleteData("department");
@@ -72,6 +75,24 @@ function viewDepartments(selection) {
     CLC.CLS()
     db.query(
         `SELECT ${selection} FROM departments`,
+        function(err, results, fields) {
+          console.table(results);
+          // Set timeout is necessary for debouncing
+          setTimeout(() => pressAnyKey(null)
+            .then(() => {
+                // ... User presses a key
+                mainMenu();
+            }), 50);
+          //mainMenu();
+          //console.log(results); // results contains rows returned by server
+          //console.log(fields); // fields contains extra meta data about results, if available
+        }
+    );
+}
+function viewRoles(selection) {
+    CLC.CLS()
+    db.query(
+        `SELECT ${selection} FROM roles`,
         function(err, results, fields) {
           console.table(results);
           // Set timeout is necessary for debouncing

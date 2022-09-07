@@ -4,5 +4,8 @@ CREATE DATABASE company_db;
 USE company_db;
 
 CREATE TABLE departments (
-  department_name VARCHAR(20)
+  department_name TEXT NOT NULL
+);
+CREATE TABLE roles (
+  role_name TEXT NOT NULL
 );
