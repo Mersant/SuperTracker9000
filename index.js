@@ -1,8 +1,24 @@
 const CLControl = require('./lib/CLControl.js')
 const inquirer = require('inquirer');
 const fs = require('fs');
+const mysql = require('mysql2');
+const cTable = require('console.table');
+const pressAnyKey = require('press-any-key');
+const clc = require('./lib/CLControl.js');
+const { delay } = require('rxjs');
+require('dotenv').config();
 
 const CLC = new CLControl;
+
+// Connect to database
+const db = mysql.createConnection(
+    {
+      host: process.env.HOST,
+      user: process.env.USER,
+      password: process.env.PASSWORD,
+      database: 'company_db'
+    },
+);
 
 function dispHeader(colorFunc, quip) {
     CLC.CLS();
@@ -53,7 +69,22 @@ function mainMenu() {
 mainMenu();
 
 function viewDepartments(selection) {
-    
+    CLC.CLS()
+    db.query(
+        `SELECT ${selection} FROM departments`,
+        function(err, results, fields) {
+          console.table(results);
+          // Set timeout is necessary for debouncing
+          setTimeout(() => pressAnyKey(null)
+            .then(() => {
+                // ... User presses a key
+                mainMenu();
+            }), 50);
+          //mainMenu();
+          //console.log(results); // results contains rows returned by server
+          //console.log(fields); // fields contains extra meta data about results, if available
+        }
+    );
 }
 
 function deleteData(category) {
