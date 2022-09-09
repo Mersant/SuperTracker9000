@@ -64,6 +64,9 @@ function mainMenu() {
                 case '\u001b[36mView employees by manager\u001b[0m':
                     viewByManager();
                     break;
+                case '\u001b[36mView employees by department\u001b[0m':
+                    viewByDepartment();
+                    break;
                     
                 case "\u001b[31mDelete a department\u001b[0m":
                     deleteData("department");
@@ -96,7 +99,30 @@ function viewByManager() {
             ])
             .then((response) => {
                 viewDb(`SELECT * FROM employees WHERE manager_name = "${response.managerSelection}";`);
-                
+            })
+        }
+    );
+}
+
+function viewByDepartment() {
+    db.query(
+        'SELECT department FROM employees;',
+        function(err, results, fields) {
+          var temp = [];
+          results.forEach(dat => temp.push(dat["department"]));
+          var departmentOptions = [...new Set(temp)];
+
+          inquirer
+            .prompt([
+            {
+                type: 'list',
+                message: 'Please select department from the list',
+                choices: departmentOptions,
+                name: 'departmentSelection'
+            }
+            ])
+            .then((response) => {
+                viewDb(`SELECT * FROM employees WHERE department = "${response.departmentSelection}";`);
             })
         }
     );
@@ -116,9 +142,6 @@ function viewDb(sqlQuery) {
                 // ... User presses a key
                 mainMenu();
             }), 50);
-          //mainMenu();
-          //console.log(results); // results contains rows returned by server
-          //console.log(fields); // fields contains extra meta data about results, if available
         }
     );
 }

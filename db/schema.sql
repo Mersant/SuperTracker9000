@@ -11,5 +11,6 @@ CREATE TABLE roles (
 );
 CREATE TABLE employees (
   employee_name TEXT NOT NULL,
-  manager_name TEXT NOT NULL
+  manager_name TEXT NOT NULL,
+  department TEXT NOT NULL
 );
