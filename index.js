@@ -53,12 +53,18 @@ function mainMenu() {
             switch(response.selectedOption) {
 
                 case '\u001b[36mView all departments\u001b[0m':
-                    viewDepartments('*');
+                    viewDb('SELECT * FROM departments;');
                     break;
                 case '\u001b[36mView all roles\u001b[0m':
-                    viewRoles('*');
+                    viewDb('SELECT * FROM roles;');
                     break;
-
+                case '\u001b[36mView all employees\u001b[0m':
+                    viewDb('SELECT * FROM employees;');
+                    break;
+                case '\u001b[36mView employees by manager\u001b[0m':
+                    viewByManager();
+                    break;
+                    
                 case "\u001b[31mDelete a department\u001b[0m":
                     deleteData("department");
                     break;
@@ -71,10 +77,37 @@ function mainMenu() {
 }
 mainMenu();
 
-function viewDepartments(selection) {
-    CLC.CLS()
+function viewByManager() {
     db.query(
-        `SELECT ${selection} FROM departments`,
+        'SELECT manager_name FROM employees;',
+        function(err, results, fields) {
+          var temp = [];
+          results.forEach(dat => temp.push(dat["manager_name"]));
+          var managerOptions = [...new Set(temp)];
+
+          inquirer
+            .prompt([
+            {
+                type: 'list',
+                message: 'Please select manager from the list',
+                choices: managerOptions,
+                name: 'managerSelection'
+            }
+            ])
+            .then((response) => {
+                viewDb(`SELECT * FROM employees WHERE manager_name = "${response.managerSelection}";`);
+                
+            })
+        }
+    );
+}
+
+function viewDb(sqlQuery) {
+    CLC.CLS();
+    dispHeader(CLC.CYAN, 'Now viewing info. . .');
+    CLC.CYAN();
+    db.query(
+        sqlQuery,
         function(err, results, fields) {
           console.table(results);
           // Set timeout is necessary for debouncing
@@ -89,24 +122,7 @@ function viewDepartments(selection) {
         }
     );
 }
-function viewRoles(selection) {
-    CLC.CLS()
-    db.query(
-        `SELECT ${selection} FROM roles`,
-        function(err, results, fields) {
-          console.table(results);
-          // Set timeout is necessary for debouncing
-          setTimeout(() => pressAnyKey(null)
-            .then(() => {
-                // ... User presses a key
-                mainMenu();
-            }), 50);
-          //mainMenu();
-          //console.log(results); // results contains rows returned by server
-          //console.log(fields); // fields contains extra meta data about results, if available
-        }
-    );
-}
+
 
 function deleteData(category) {
     dispHeader(CLC.RED, "*** Danger zone! ***");
