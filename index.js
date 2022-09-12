@@ -29,7 +29,6 @@ function dispHeader(colorFunc, quip) {
 
 function mainMenu() {
     dispHeader(CLC.GREEN, "Better than 8999!");
-
     inquirer
         .prompt([
         {
@@ -73,7 +72,7 @@ function mainMenu() {
                     break;
                     
                 case "\u001b[31mDelete a department\u001b[0m":
-                    deleteData("departments");
+                    deleteDepartment();
                     break;
 
                 default:
@@ -85,6 +84,7 @@ function mainMenu() {
 mainMenu();
 
 function viewByManager() {
+    dispHeader(CLC.BLUE, "Viewing by manager...");
     db.query(
         'SELECT * FROM employee WHERE role_id=1;',
         function(err, results, fields) {
@@ -109,6 +109,7 @@ function viewByManager() {
 }
 
 function viewByDepartment() {
+    dispHeader(CLC.BLUE, "Viewing by department...");
     db.query(
         'SELECT * FROM departments;',
         function(err, results, fields) {
@@ -133,7 +134,6 @@ function viewByDepartment() {
 }
 
 function viewDb(sqlQuery) {
-    CLC.CLS();
     dispHeader(CLC.CYAN, 'Now viewing info. . .');
     CLC.CYAN();
     db.query(
@@ -153,5 +153,30 @@ function viewDb(sqlQuery) {
 
 function deleteDepartment() {
     dispHeader(CLC.RED, "*** Danger zone! ***");
+    db.query(
+        'SELECT * FROM departments;',
+        function(err, results, fields) {
+          var temp = [];
+          results.forEach(dat => temp.push(dat["department_name"]));
+          var departmentOptions = [...new Set(temp)];
+          departmentOptions.push("Cancel");
 
+          inquirer
+            .prompt([
+            {
+                type: 'list',
+                message: '** YOU ARE ABOUT TO DELETE A DEPARTMENT AND ALL OF ITS EMPLOYEES FROM THE DB ** Please select which department you wish to delete.',
+                choices: departmentOptions,
+                name: 'departmentSelection'
+            }
+            ])
+            .then((response) => {
+                if(response.departmentSelection == "Cancel") {
+                    mainMenu();
+                    return;
+                }
+                viewDb(`DELETE FROM departments WHERE dept_id=${results[departmentOptions.indexOf(response.departmentSelection)]["dept_id"]}`);
+            })
+        }
+    );
 }
