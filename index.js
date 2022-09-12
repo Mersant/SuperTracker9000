@@ -72,7 +72,13 @@ function mainMenu() {
                     break;
                     
                 case "\u001b[31mDelete a department\u001b[0m":
-                    deleteDepartment();
+                    deleteData("departments", "department_name", "dept_id", "DELETE A DEPARTMENT");
+                    break;
+                case "\u001b[31mDelete a role\u001b[0m":
+                    deleteData("roles", "title", "id", "DELETE A ROLE")
+                    break;
+                case "\u001b[31mDelete an employee\u001b[0m":
+                    deleteData("employee","employeename", "employee_id", "DELETE AN EMPLOYEE");
                     break;
 
                 default:
@@ -150,32 +156,41 @@ function viewDb(sqlQuery) {
     );
 }
 
-
-function deleteDepartment() {
+// deleteData: General purpose function to delete a row of data
+//      selection: Table name, i.e. "employee" or "roles"
+//      selectionTitle: How the title of the selection is stored, i.e. "employee_name" or "dept_name"
+//      idName: How the id of the selection is stored, i.e. "employee_id"
+//      msg: The message to display after "YOU ARE ABOUT TO ", example could be "DELETE AN EMPLOYEE"
+function deleteData(selection, selectionTitle, idName, msg) {
     dispHeader(CLC.RED, "*** Danger zone! ***");
     db.query(
-        'SELECT * FROM departments;',
+        `SELECT * FROM ${selection};`,
         function(err, results, fields) {
           var temp = [];
-          results.forEach(dat => temp.push(dat["department_name"]));
-          var departmentOptions = [...new Set(temp)];
-          departmentOptions.push("Cancel");
+          if(selectionTitle == "employeename") {
+            results.forEach(dat => temp.push(`${dat["first_name"]} ${dat["last_name"]}`))
+          } else {
+            results.forEach(dat => temp.push(dat[`${selectionTitle}`]));
+          }
+          // Options now contains the name of possible selections to delete, such as a list of employee names or department names
+          var options = [...new Set(temp)];
+          options.push("Cancel");
 
           inquirer
             .prompt([
             {
                 type: 'list',
-                message: '** YOU ARE ABOUT TO DELETE A DEPARTMENT AND ALL OF ITS EMPLOYEES FROM THE DB ** Please select which department you wish to delete.',
-                choices: departmentOptions,
-                name: 'departmentSelection'
+                message: `** YOU ARE ABOUT TO ${msg} Please choose carefully! **`,
+                choices: options,
+                name: 'selection'
             }
             ])
             .then((response) => {
-                if(response.departmentSelection == "Cancel") {
+                if(response.selection == "Cancel") {
                     mainMenu();
                     return;
                 }
-                viewDb(`DELETE FROM departments WHERE dept_id=${results[departmentOptions.indexOf(response.departmentSelection)]["dept_id"]}`);
+                viewDb(`DELETE FROM ${selection} WHERE ${idName}=${results[options.indexOf(response.selection)][`${idName}`]}`);
             })
         }
     );
