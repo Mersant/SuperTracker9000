@@ -56,10 +56,10 @@ function mainMenu() {
                     viewDb('SELECT * FROM departments;');
                     break;
                 case '\u001b[36mView all roles\u001b[0m':
-                    viewDb('SELECT * FROM roles;');
+                    viewDb('SELECT * FROM roles LEFT JOIN departments ON role_dept_id = departments.dept_id;');
                     break;
                 case '\u001b[36mView all employees\u001b[0m':
-                    viewDb('SELECT * FROM employees;');
+                    viewDb('SELECT employee.employee_id as id, first_name, last_name, title as role FROM employee RIGHT JOIN roles ON role_id = roles.id;');
                     break;
                 case '\u001b[36mView employees by manager\u001b[0m':
                     viewByManager();
@@ -67,9 +67,13 @@ function mainMenu() {
                 case '\u001b[36mView employees by department\u001b[0m':
                     viewByDepartment();
                     break;
+
+                case '\u001b[36mView total budget of a department\u001b[0m':
+                    viewByDepartment();
+                    break;
                     
                 case "\u001b[31mDelete a department\u001b[0m":
-                    deleteData("department");
+                    deleteData("departments");
                     break;
 
                 default:
@@ -82,10 +86,10 @@ mainMenu();
 
 function viewByManager() {
     db.query(
-        'SELECT manager_name FROM employees;',
+        'SELECT * FROM employee WHERE role_id=1;',
         function(err, results, fields) {
           var temp = [];
-          results.forEach(dat => temp.push(dat["manager_name"]));
+          results.forEach(dat => temp.push(`${dat["first_name"]} ${dat["last_name"]}`));
           var managerOptions = [...new Set(temp)];
 
           inquirer
@@ -98,7 +102,7 @@ function viewByManager() {
             }
             ])
             .then((response) => {
-                viewDb(`SELECT * FROM employees WHERE manager_name = "${response.managerSelection}";`);
+                viewDb(`SELECT employee.employee_id as id, first_name, last_name FROM employee WHERE manager_id = (SELECT employee_id FROM employee WHERE employee_id = ${results[managerOptions.indexOf(response.managerSelection)]["employee_id"]});`);
             })
         }
     );
@@ -106,10 +110,10 @@ function viewByManager() {
 
 function viewByDepartment() {
     db.query(
-        'SELECT department FROM employees;',
+        'SELECT * FROM departments;',
         function(err, results, fields) {
           var temp = [];
-          results.forEach(dat => temp.push(dat["department"]));
+          results.forEach(dat => temp.push(dat["department_name"]));
           var departmentOptions = [...new Set(temp)];
 
           inquirer
@@ -122,7 +126,7 @@ function viewByDepartment() {
             }
             ])
             .then((response) => {
-                viewDb(`SELECT * FROM employees WHERE department = "${response.departmentSelection}";`);
+                viewDb(`SELECT * FROM roles INNER JOIN departments ON role_dept_id = departments.dept_id AND role_dept_id=${results[departmentOptions.indexOf(response.departmentSelection)]["dept_id"]} INNER JOIN employee ON id=employee.role_id;`);
             })
         }
     );
@@ -147,7 +151,7 @@ function viewDb(sqlQuery) {
 }
 
 
-function deleteData(category) {
+function deleteDepartment() {
     dispHeader(CLC.RED, "*** Danger zone! ***");
 
 }
