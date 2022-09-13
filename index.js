@@ -1,11 +1,8 @@
 const CLControl = require('./lib/CLControl.js')
 const inquirer = require('inquirer');
-const fs = require('fs');
 const mysql = require('mysql2');
 const cTable = require('console.table');
 const pressAnyKey = require('press-any-key');
-const clc = require('./lib/CLControl.js');
-const { delay } = require('rxjs');
 require('dotenv').config();
 
 const CLC = new CLControl;
@@ -20,6 +17,7 @@ const db = mysql.createConnection(
     },
 );
 
+// This function displays "Super Tracker 9000" in ASCII art at the top of the terminal window. colorFunc is a callback function to set the color of the terminal and is designed to accept a CLControl function, but any function that sets the color of the terminal will work. The "quip" argument is a short phrase that can appear at the bottom right of this ASCII art.
 function dispHeader(colorFunc, quip) {
     CLC.CLS();
     colorFunc();
@@ -41,6 +39,9 @@ function mainMenu() {
                 '\u001b[36mView employees by manager\u001b[0m',
                 '\u001b[36mView employees by department\u001b[0m',
                 '\u001b[34mView total budget of a department\u001b[0m',
+                '\u001b[32mAdd a department\u001b[0m',
+                '\u001b[32mAdd a role\u001b[0m',
+                '\u001b[32mAdd an employee\u001b[0m',
                 '\u001b[31mDelete a department\u001b[0m',
                 '\u001b[31mDelete a role\u001b[0m',
                 '\u001b[31mDelete an employee\u001b[0m'
@@ -70,6 +71,13 @@ function mainMenu() {
                 case '\u001b[36mView total budget of a department\u001b[0m':
                     viewByDepartment();
                     break;
+
+                case '\u001b[32mAdd a department\u001b[0m':
+                    addDepartment();
+                    break;
+                case '\u001b[32mAdd a role\u001b[0m':
+                    addRole();
+                    break;
                     
                 case "\u001b[31mDelete a department\u001b[0m":
                     deleteData("departments", "department_name", "dept_id", "DELETE A DEPARTMENT");
@@ -86,9 +94,9 @@ function mainMenu() {
             }
         }
     );
-}
-mainMenu();
+} mainMenu();
 
+// viewByManager: This function will ask the user to select a manager from a list, then display information regarding the employees working under the selected manager in a formatted table.
 function viewByManager() {
     dispHeader(CLC.BLUE, "Viewing by manager...");
     db.query(
@@ -114,6 +122,7 @@ function viewByManager() {
     );
 }
 
+// viewByDepartment: This function will ask the user to select a department from a list, then return details about that department in a formatted table.
 function viewByDepartment() {
     dispHeader(CLC.BLUE, "Viewing by department...");
     db.query(
@@ -139,6 +148,7 @@ function viewByDepartment() {
     );
 }
 
+// viewDb: General purpose function that queries the MySQL server with "sqlQuery" and returns the result in a formatted table.
 function viewDb(sqlQuery) {
     dispHeader(CLC.CYAN, 'Now viewing info. . .');
     CLC.CYAN();
@@ -152,6 +162,52 @@ function viewDb(sqlQuery) {
                 // ... User presses a key
                 mainMenu();
             }), 50);
+        }
+    );
+}
+
+function addDepartment() {
+    inquirer
+        .prompt([
+            {
+                message: "Please the name of the department you wish to add",
+                name: "inputtedName"
+            }
+        ])
+        .then((response) => {
+            viewDb(`INSERT INTO departments (department_name) VALUES  ("${response.inputtedName}")`);
+        })
+}
+function addRole() {
+    db.query(
+        `SELECT * FROM departments;`,
+        function(err, results, fields) {
+          var temp = [];
+          results.forEach(dat => temp.push(dat['department_name']));
+          // Options now contains a list of departments the role can belong to.
+          var options = [...new Set(temp)];
+          options.push("Cancel");
+
+        inquirer
+            .prompt([
+                {
+                    message: "Please the name of the role you wish to add",
+                    name: "inputtedName"
+                },
+                {
+                    message: "Please input the desired salary of this role",
+                    name: "inputtedSalary"
+                },
+                {
+                    type: "list",
+                    message: "Please select which department this role will belong to",
+                    name: "selectedDepartment",
+                    choices: options
+                }
+            ])
+            .then((response) => {
+                viewDb(`INSERT INTO roles (title, salary, role_dept_id) VALUES  ("${response.inputtedName}", ${response.inputtedSalary}, ${results[options.indexOf(response.selectedDepartment)]["dept_id"]})`);
+            })
         }
     );
 }
