@@ -14,6 +14,7 @@ Super Tracker 9000 is your one stop shop for managing your company's database. I
  * Adding departments, employees or roles  
  * Changing an employee's role within the database  
  * Deleting employees, roles or departments  
+ 
 A walkthrough demonstration of this program can be found at (https://youtu.be/pqgMioa-HbY)
 ## Installation Instructions
 Download the zip file from Github and extract to the desired folder. Now, open your desired terminal and navigate to the directory you extracted the zip file to. Once there, you can easily run the application by invoking the command "node index.js" while in the root directory of the project. If you do not have Node installed on your system, you can find it at (https://nodejs.org/en/download/).
